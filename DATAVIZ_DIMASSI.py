@@ -34,31 +34,30 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# 1. Charger le dataset
+# Charger le dataset nettoyé
 df = pd.read_csv("dataset_marketing_dataviz_clean.csv")
 
-# 2. Agréger les impressions par campagne
-impressions_par_campagne = df.groupby("Campagne")["Impressions"].sum().reset_index()
+# Convertir la colonne 'Date' en datetime
+df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
-# 3. Configurer la taille de la figure
-plt.figure(figsize=(10, 6))
+# Agréger les clics par mois (regroupement par fin de mois)
+clicks_by_month = df.groupby(pd.Grouper(key="Date", freq="M"))["Clics"].sum().reset_index()
 
-# 4. Créer un diagramme en barres
-sns.barplot(data=impressions_par_campagne, x="Campagne", y="Impressions")
+# Configurer le graphique
+plt.figure(figsize=(10, 5))
+sns.barplot(data=clicks_by_month, x="Date", y="Clics", color="skyblue")
 
-# 5. Personnaliser l'histogramme
-plt.title("Histogramme des Impressions par Campagne")
-plt.xlabel("Campagne")
-plt.ylabel("Nombre total d'Impressions")
+# Personnaliser le graphique
+plt.title("Evolution des Clicks (par Mois)")
+plt.xlabel("Mois")
+plt.ylabel("Nombre de Clics")
 plt.xticks(rotation=45)
+
 plt.tight_layout()
 
-# 6. Enregistrer l’histogramme sous forme de fichier PNG
-plt.savefig("histogram_impressions.png", dpi=300)  # dpi=300 pour une bonne résolution
+# Enregistrer le graphique sous forme d'image
+plt.savefig("evolution_clics_barchart.png", dpi=300)
 
-# 7. Afficher l’histogramme
+# Afficher le graphique
 plt.show()
-
-
-
 
