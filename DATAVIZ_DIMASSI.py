@@ -32,36 +32,52 @@ print("\nLe dataset nettoyé a été sauvegardé sous 'dataset_marketing_dataviz
 
 import seaborn as sns
 import matplotlib.pyplot as plt
-from matplotlib.dates import DateFormatter
+from scipy.stats import linregress
+from matplotlib.ticker import FuncFormatter
 
 # Charger le dataset nettoyé
 df = pd.read_csv("dataset_marketing_dataviz_clean.csv")
 
-# Convertir la colonne 'Date' en datetime
-df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+# Vérifier que les colonnes "Clicks" et "Conversions" existent
+if "Clics" not in df.columns or "Conversions" not in df.columns:
+    print("Les colonnes 'Clics' et 'Conversions' doivent être présentes dans le dataset.")
+    exit()
 
-# Agréger les clics par semaine
-clicks_by_week = df.groupby(pd.Grouper(key="Date", freq="W"))["Clics"].sum().reset_index()
+# Calculer la régression linéaire et le coefficient de corrélation
+regression = linregress(df["Clics"], df["Conversions"])
+slope = regression.slope
+intercept = regression.intercept
+r_value = regression.rvalue
+p_value = regression.pvalue
 
-# Configurer le graphique
-plt.figure(figsize=(12, 6))
-sns.lineplot(data=clicks_by_week, x="Date", y="Clics", marker="o")
+# Créer le scatterplot avec la droite de régression
+plt.figure(figsize=(10, 6))
+sns.regplot(data=df, x="Clics", y="Conversions",
+            scatter_kws={'s':80, 'alpha':0.7, 'edgecolor':'white'},
+            line_kws={'color':'red', 'linewidth':2})
 
-# Personnalisation du graphique
-plt.title("Evolution des Clics par Semaine")
-plt.xlabel("Semaine")
-plt.ylabel("Nombre de Clics")
+# Personnaliser le graphique
+plt.title("Scatterplot : Clics vs Conversions", fontsize=16)
+plt.xlabel("Clics", fontsize=14)
+plt.ylabel("Conversions", fontsize=14)
+plt.grid(True, linestyle="--", alpha=0.5)
 
-# Configurer l'échelle de l'axe X pour afficher les dates par semaine
-date_formatter = DateFormatter("%Y-%W")
-plt.gca().xaxis.set_major_formatter(date_formatter)
-plt.xticks(rotation=45)
+# Formater les axes pour afficher les valeurs en milliers (ex : 50k, 100k, ...)
+formatter = FuncFormatter(lambda x, pos: f'{int(x/1000)}k' if x >= 1000 else f'{x}')
+plt.gca().xaxis.set_major_formatter(formatter)
+plt.gca().yaxis.set_major_formatter(formatter)
+
+# Annoter le graphique avec des informations clés
+plt.annotate(
+    f"Corrélation: {r_value:.2f}\nPente: {slope:.2e}\nP-value: {p_value:.2g}",
+    xy=(0.05, 0.85), xycoords="axes fraction", fontsize=12,
+    bbox=dict(boxstyle="round,pad=0.5", fc="yellow", alpha=0.5)
+)
 
 plt.tight_layout()
 
-# Enregistrer le graphique dans un fichier image
-plt.savefig("evolution_clicks_weekly_curve.png", dpi=300)
+# Enregistrer le graphique
+plt.savefig("scatterplot_clics_vs_conversions_annotated.png", dpi=300)
 
 # Afficher le graphique
 plt.show()
-
