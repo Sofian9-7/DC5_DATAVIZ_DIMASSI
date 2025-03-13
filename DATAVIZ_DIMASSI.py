@@ -30,9 +30,9 @@ df_clean.to_csv("dataset_marketing_dataviz_clean.csv", index=False)
 print("\nLe dataset nettoyé a été sauvegardé sous 'dataset_marketing_dataviz_clean.csv'.")
 
 
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter
 
 # Charger le dataset nettoyé
 df = pd.read_csv("dataset_marketing_dataviz_clean.csv")
@@ -40,23 +40,27 @@ df = pd.read_csv("dataset_marketing_dataviz_clean.csv")
 # Convertir la colonne 'Date' en datetime
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
-# Agréger les clics par mois (regroupement par fin de mois)
-clicks_by_month = df.groupby(pd.Grouper(key="Date", freq="M"))["Clics"].sum().reset_index()
+# Agréger les clics par semaine
+clicks_by_week = df.groupby(pd.Grouper(key="Date", freq="W"))["Clics"].sum().reset_index()
 
 # Configurer le graphique
-plt.figure(figsize=(10, 5))
-sns.barplot(data=clicks_by_month, x="Date", y="Clics", color="skyblue")
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=clicks_by_week, x="Date", y="Clics", marker="o")
 
-# Personnaliser le graphique
-plt.title("Evolution des Clicks (par Mois)")
-plt.xlabel("Mois")
+# Personnalisation du graphique
+plt.title("Evolution des Clics par Semaine")
+plt.xlabel("Semaine")
 plt.ylabel("Nombre de Clics")
+
+# Configurer l'échelle de l'axe X pour afficher les dates par semaine
+date_formatter = DateFormatter("%Y-%W")
+plt.gca().xaxis.set_major_formatter(date_formatter)
 plt.xticks(rotation=45)
 
 plt.tight_layout()
 
-# Enregistrer le graphique sous forme d'image
-plt.savefig("evolution_clics_barchart.png", dpi=300)
+# Enregistrer le graphique dans un fichier image
+plt.savefig("evolution_clicks_weekly_curve.png", dpi=300)
 
 # Afficher le graphique
 plt.show()
