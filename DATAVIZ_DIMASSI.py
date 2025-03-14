@@ -30,73 +30,42 @@ df_clean.to_csv("dataset_marketing_dataviz_clean.csv", index=False)
 print("\nLe dataset nettoyé a été sauvegardé sous 'dataset_marketing_dataviz_clean.csv'.")
 
 
-import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
-# Charger les données
-df = pd.read_csv('dataset_marketing_dataviz_clean.csv')
-# Simplifier les noms des canaux
-df['Canal'] = df['Campagne'].str.replace(' Ads', '').str.replace(' Marketing', '')
-# Créer des bins pour les clics (5 catégories)
-bins = [0, 400, 800, 1200, 1600, 2000]
-labels = ['0-400', '401-800', '801-1200', '1201-1600', '1601-2000']
-df['Groupe_Clics'] = pd.cut(df['Clics'], bins=bins, labels=labels, include_lowest=True)
-# Calculer la moyenne des conversions par canal et par groupe de clics
-grouped = df.groupby(['Canal', 'Groupe_Clics']).agg({
-    'Conversions': 'mean',
-    'Clics': 'mean'  # Pour positionner les points sur l'axe X
-}).reset_index()
-# Arrondir pour plus de lisibilité
-grouped['Conversions'] = grouped['Conversions'].round(0)
-# Créer un graphique simple et épuré
-plt.figure(figsize=(12, 8))
-sns.set_style("whitegrid")
-# Palette de couleurs distinctes
-colors = {
-    "Email": "#4285F4",    # Bleu Google
-    "TikTok": "#EA4335",   # Rouge Google
-    "Facebook": "#FBBC05", # Jaune Google
-    "Google": "#34A853"    # Vert Google
-}
-# Créer le scatterplot avec des points plus grands
-for canal in grouped['Canal'].unique():
-    data = grouped[grouped['Canal'] == canal]
-    plt.scatter(
-        data['Clics'],
-        data['Conversions'],
-        s=200,  # Points très grands
-        color=colors[canal],
-        label=canal,
-        edgecolor='white',
-        linewidth=1.5
-    )
-    # Ajouter des étiquettes pour chaque point
-    for i, row in data.iterrows():
-        plt.annotate(
-            f"{int(row['Conversions'])}",
-            (row['Clics'], row['Conversions']),
-            xytext=(0, 5),
-            textcoords='offset points',
-            ha='center',
-            fontsize=12,
-            fontweight='bold'
-        )
-# Ajouter des lignes horizontales pour faciliter la lecture
-plt.axhline(y=50, color='gray', linestyle='--', alpha=0.3)
-plt.axhline(y=100, color='gray', linestyle='--', alpha=0.3)
-plt.axhline(y=150, color='gray', linestyle='--', alpha=0.3)
-# Titres et labels simples et lisibles
-plt.title('Conversions moyennes par volume de clics', fontsize=18, fontweight='bold')
-plt.xlabel('Clics (moyenne par groupe)', fontsize=14)
-plt.ylabel('Conversions moyennes', fontsize=14)
-# Légende claire
-plt.legend(
-    title='Canal',
-    fontsize=12,
-    title_fontsize=14,
-    loc='best'
-)
-# Sauvegarder et afficher
-plt.tight_layout()
-plt.savefig('conversions_moyennes_par_clics.png', dpi=300)
+import matplotlib.pyplot as plt
+
+# Charger le dataset nettoyé (assurez-vous que 'Campaign' et 'Conversions' existent)
+df = pd.read_csv("dataset_marketing_dataviz_clean.csv")
+
+# Agréger les conversions par type de campagne
+df_grouped = df.groupby("Campagne")["Conversions"].sum().reset_index()
+
+# Créer une figure avec 2 sous-graphes côte à côte
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+### Version Honnête et Informative ###
+# Barplot avec axe y débutant à 0
+sns.barplot(data=df_grouped, x="Campagne", y="Conversions", ax=ax1, palette="viridis")
+ax1.set_title("Version Honnête et Informative", fontsize=16)
+ax1.set_xlabel("Type de Campagne", fontsize=14)
+ax1.set_ylabel("Conversions", fontsize=14)
+ax1.set_ylim(0, df_grouped["Conversions"].max() * 1.1)  # Axe y commençant à 0
+ax1.tick_params(axis='x', rotation=45)
+ax1.grid(True, linestyle="--", alpha=0.5)
+
+### Version Trompeuse ###
+# Même graphique mais avec axe y tronqué pour exagérer les différences
+sns.barplot(data=df_grouped, x="Campagne", y="Conversions", ax=ax2, palette="viridis")
+ax2.set_title("Version Trompeuse", fontsize=16)
+ax2.set_xlabel("Type de Campagne", fontsize=14)
+ax2.set_ylabel("Conversions", fontsize=14)
+# On définit l'axe y en partant d'une valeur > 0, ici proche du minimum observé
+y_min = df_grouped["Conversions"].min()
+y_max = df_grouped["Conversions"].max()
+ax2.set_ylim(y_min, y_max * 1.1)
+ax2.tick_params(axis='x', rotation=45)
+ax2.grid(True, linestyle="--", alpha=0.5)
+
+plt.suptitle("Comparaison des Visualisations : Conversions vs Type de Campagne", fontsize=18)
+plt.tight_layout(rect=[0, 0, 1, 0.93])
+plt.savefig("comparaison_conversions_campaign.png", dpi=300)
 plt.show()
